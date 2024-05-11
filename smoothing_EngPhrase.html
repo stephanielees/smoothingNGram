@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>smoothing_engphrase</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="smoothing_EngPhrase_files/libs/clipboard/clipboard.min.js"></script>
+<script src="smoothing_EngPhrase_files/libs/quarto-html/quarto.js"></script>
+<script src="smoothing_EngPhrase_files/libs/quarto-html/popper.min.js"></script>
+<script src="smoothing_EngPhrase_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="smoothing_EngPhrase_files/libs/quarto-html/anchor.min.js"></script>
+<link href="smoothing_EngPhrase_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="smoothing_EngPhrase_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="smoothing_EngPhrase_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="smoothing_EngPhrase_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="smoothing_EngPhrase_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="smoothing_EngPhrase_files/libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<script src="smoothing_EngPhrase_files/libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<script src="smoothing_EngPhrase_files/libs/plotly-binding-4.10.4/plotly.js"></script>
+<script src="smoothing_EngPhrase_files/libs/typedarray-0.1/typedarray.min.js"></script>
+<script src="smoothing_EngPhrase_files/libs/jquery-3.5.1/jquery.min.js"></script>
+<link href="smoothing_EngPhrase_files/libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
+<script src="smoothing_EngPhrase_files/libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+<link href="smoothing_EngPhrase_files/libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet">
+<script src="smoothing_EngPhrase_files/libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+<section id="ngram-viewer" class="level1">
+<h1>Ngram viewer</h1>
+<section id="load-libraries" class="level2">
+<h2 class="anchored" data-anchor-id="load-libraries">Load libraries</h2>
+<ul>
+<li><code>ngramr</code> : for getting the data</li>
+<li><code>dlm</code> : for applying Normal Dynamic Linear Model</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ngramr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dlm)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plotly)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: ggplot2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'ggplot2'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:dlm':
+
+    %+%</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'plotly'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:ggplot2':
+
+    last_plot</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:stats':
+
+    filter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:graphics':
+
+    layout</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># make a function to build DLM model, filter, and smooth</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>smoothed <span class="ot">&lt;-</span> <span class="cf">function</span>(ts){</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    mod <span class="ot">&lt;-</span> <span class="fu">dlmModPoly</span>()</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    mod.filter <span class="ot">&lt;-</span> <span class="fu">dlmFilter</span>(ts, mod)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    mod.smooth <span class="ot">&lt;-</span> <span class="fu">dlmSmooth</span>(mod.filter)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    mod.smooth<span class="sc">$</span>s[<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="do-natives-still-say-raining-cats-and-dogs" class="level1">
+<h1>Do natives still say <em>raining cats and dogs</em>?</h1>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>PHRASE1 <span class="ot">&lt;-</span> <span class="st">'raining cats and dogs'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>phrase1 <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE1, <span class="at">year_start=</span><span class="dv">1980</span>, <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>phrase1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># Ngram data table
+# Phrases:      raining cats and dogs
+# Case-sensitive:   TRUE
+# Corpuses:     en-2019
+# Smoothing:        0
+# Years:        1980-2019
+
+  Year                Phrase    Frequency  Corpus
+1 1980 raining cats and dogs 9.414635e-09 en-2019
+2 1981 raining cats and dogs 8.850581e-09 en-2019
+3 1982 raining cats and dogs 1.049580e-08 en-2019
+4 1983 raining cats and dogs 1.069718e-08 en-2019
+5 1984 raining cats and dogs 1.170959e-08 en-2019
+6 1985 raining cats and dogs 1.104851e-08 en-2019</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code># ... with 34 more rows</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data=</span>phrase1, <span class="fu">aes</span>(<span class="at">x=</span>Year)) <span class="sc">+</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y=</span>Frequency), <span class="at">col=</span><span class="st">'darkolivegreen3'</span>, </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">lwd=</span><span class="fl">1.5</span>) <span class="sc">+</span> <span class="fu">theme_google</span>() <span class="sc">+</span> </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x=</span><span class="st">'Year'</span>, <span class="at">y=</span><span class="st">'Frequency'</span>, </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">title=</span><span class="st">"Usage of 'raining cats and dogs'"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="smoothing_EngPhrase_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>phrase1.smooth1 <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE1, <span class="at">year_start=</span><span class="dv">1980</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smoothing=</span><span class="dv">1</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>phrase1.smooth2 <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE1, <span class="at">year_start=</span><span class="dv">1980</span>, </span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smoothing=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">data=</span>phrase1, <span class="at">x=</span><span class="sc">~</span>Year) <span class="sc">%&gt;%</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span><span class="sc">~</span>Frequency, <span class="at">name=</span><span class="st">'raw frequency'</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkolivegreen3'</span>),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">type=</span><span class="st">'scatter'</span>, <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.smooth1<span class="sc">$</span>Frequency, </span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 1 frequency'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.smooth2<span class="sc">$</span>Frequency,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 2 frequency'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">title=</span><span class="st">"Smoothing 'raining cats and dogs' with MA"</span>,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">yaxis=</span><span class="fu">list</span>(<span class="at">showexponent=</span><span class="st">'all'</span>,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>                      <span class="at">exponentformat=</span><span class="st">'e'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-a6bf0ae859a22b0b2516" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-a6bf0ae859a22b0b2516">{"x":{"visdat":{"311c69c62b3":["function () ","plotlyVisDat"]},"cur_data":"311c69c62b3","attrs":{"311c69c62b3":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"raw frequency","color":["darkolivegreen3"],"type":"scatter","mode":"lines+markers","inherit":true},"311c69c62b3.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.1326080031706169e-09,9.5870067440273488e-09,1.0014520176090022e-08,1.0967522593811433e-08,1.1151757147350358e-08,1.1774635488848162e-08,1.2373097509528938e-08,1.3172866353272639e-08,1.3368952463584568e-08,1.3274405278688542e-08,1.4314296118792905e-08,1.5081053739152139e-08,1.5829319484813215e-08,1.4891521793458651e-08,1.4665348047060434e-08,1.470239337682718e-08,1.6092912188033399e-08,1.7017974585087359e-08,1.7598776954249235e-08,1.8605807857359952e-08,1.904471661854738e-08,2.1240963358574543e-08,2.242162366883349e-08,2.542116028791952e-08,2.6111375580247415e-08,2.6470027947311792e-08,2.677042706030382e-08,2.7211648638096147e-08,2.8261127956360117e-08,3.0015339547162512e-08,3.3150834966022558e-08,3.4536520606328246e-08,3.4047195877443905e-08,3.3761801650674293e-08,3.4714934334563928e-08,3.4269293773074118e-08,3.4171861784670909e-08,3.2519505310801833e-08,3.4526743538284187e-08,3.4009749683150403e-08],"type":"scatter","mode":"lines","name":"smoothing 1 frequency","inherit":true},"311c69c62b3.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.5870067440273488e-09,9.8645489554627375e-09,1.0233556757555106e-08,1.0560331276110446e-08,1.1303377256410841e-08,1.1905211216856059e-08,1.2455338982420017e-08,1.274423517827472e-08,1.3178800095658972e-08,1.3979135360386862e-08,1.4369008916048643e-08,1.4772671974583318e-08,1.4892676958311312e-08,1.5203574577071776e-08,1.5005530329403882e-08,1.5499792027640068e-08,1.5916767637236261e-08,1.6629883425878233e-08,1.786406791381978e-08,1.8522161582268382e-08,1.9718714128202917e-08,2.1106257364067459e-08,2.321559158247055e-08,2.4222054761935396e-08,2.5561444161326109e-08,2.6533269803508119e-08,2.7096069743492988e-08,2.7265424762390466e-08,2.8875648183657178e-08,3.1104553954719448e-08,3.1925080890005121e-08,3.2976976527265831e-08,3.4404958171307956e-08,3.4744837762445969e-08,3.364805181149677e-08,3.4186162878313554e-08,3.3828223422460725e-08,3.410701694406271e-08,3.3701377688544198e-08,3.4526743538284187e-08],"type":"scatter","mode":"lines","name":"smoothing 2 frequency","inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Smoothing 'raining cats and dogs' with MA","yaxis":{"domain":[0,1],"automargin":true,"showexponent":"all","exponentformat":"e","title":"Frequency"},"xaxis":{"domain":[0,1],"automargin":true,"title":"Year"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.4146352935808864e-09,8.8505807127603475e-09,1.0495804225740812e-08,1.0697175589768904e-08,1.1709587965924584e-08,1.1048507886357584e-08,1.2565810614262318e-08,1.3504974027966909e-08,1.3447814417588688e-08,1.3154068945198105e-08,1.3221332473278835e-08,1.6567486937901776e-08,1.5454341806275806e-08,1.5466129710262067e-08,1.3754093863838079e-08,1.4775820567081155e-08,1.5577265699562304e-08,1.7925650297456741e-08,1.7551007758243031e-08,1.7319672807047937e-08,2.0946743006788893e-08,1.8867734041805306e-08,2.3908413027129427e-08,2.4488723937565737e-08,2.7866343899063395e-08,2.5979058904113117e-08,2.5564681038758863e-08,2.8767541238039485e-08,2.7302723637490089e-08,2.8713118993550779e-08,3.4030176010446667e-08,3.6709209894070227e-08,3.2870175914467836e-08,3.2562201823793657e-08,3.5853027213761379e-08,3.5729573966136741e-08,3.1225280139324241e-08,3.5560731248551747e-08,3.0772504544529511e-08,3.7246994821771295e-08],"name":"raw frequency","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(162,205,90,1)","line":{"color":"rgba(162,205,90,1)"}},"textfont":{"color":"rgba(162,205,90,1)"},"error_y":{"color":"rgba(162,205,90,1)"},"error_x":{"color":"rgba(162,205,90,1)"},"line":{"color":"rgba(162,205,90,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.1326080031706169e-09,9.5870067440273488e-09,1.0014520176090022e-08,1.0967522593811433e-08,1.1151757147350358e-08,1.1774635488848162e-08,1.2373097509528938e-08,1.3172866353272639e-08,1.3368952463584568e-08,1.3274405278688542e-08,1.4314296118792905e-08,1.5081053739152139e-08,1.5829319484813215e-08,1.4891521793458651e-08,1.4665348047060434e-08,1.470239337682718e-08,1.6092912188033399e-08,1.7017974585087359e-08,1.7598776954249235e-08,1.8605807857359952e-08,1.904471661854738e-08,2.1240963358574543e-08,2.242162366883349e-08,2.542116028791952e-08,2.6111375580247415e-08,2.6470027947311792e-08,2.677042706030382e-08,2.7211648638096147e-08,2.8261127956360117e-08,3.0015339547162512e-08,3.3150834966022558e-08,3.4536520606328246e-08,3.4047195877443905e-08,3.3761801650674293e-08,3.4714934334563928e-08,3.4269293773074118e-08,3.4171861784670909e-08,3.2519505310801833e-08,3.4526743538284187e-08,3.4009749683150403e-08],"type":"scatter","mode":"lines","name":"smoothing 1 frequency","marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"line":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.5870067440273488e-09,9.8645489554627375e-09,1.0233556757555106e-08,1.0560331276110446e-08,1.1303377256410841e-08,1.1905211216856059e-08,1.2455338982420017e-08,1.274423517827472e-08,1.3178800095658972e-08,1.3979135360386862e-08,1.4369008916048643e-08,1.4772671974583318e-08,1.4892676958311312e-08,1.5203574577071776e-08,1.5005530329403882e-08,1.5499792027640068e-08,1.5916767637236261e-08,1.6629883425878233e-08,1.786406791381978e-08,1.8522161582268382e-08,1.9718714128202917e-08,2.1106257364067459e-08,2.321559158247055e-08,2.4222054761935396e-08,2.5561444161326109e-08,2.6533269803508119e-08,2.7096069743492988e-08,2.7265424762390466e-08,2.8875648183657178e-08,3.1104553954719448e-08,3.1925080890005121e-08,3.2976976527265831e-08,3.4404958171307956e-08,3.4744837762445969e-08,3.364805181149677e-08,3.4186162878313554e-08,3.3828223422460725e-08,3.410701694406271e-08,3.3701377688544198e-08,3.4526743538284187e-08],"type":"scatter","mode":"lines","name":"smoothing 2 frequency","marker":{"color":"rgba(44,160,44,1)","line":{"color":"rgba(44,160,44,1)"}},"error_y":{"color":"rgba(44,160,44,1)"},"error_x":{"color":"rgba(44,160,44,1)"},"line":{"color":"rgba(44,160,44,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+<section id="smoothing" class="level2">
+<h2 class="anchored" data-anchor-id="smoothing">Smoothing</h2>
+<section id="compare-filtering-and-smoothing" class="level3">
+<h3 class="anchored" data-anchor-id="compare-filtering-and-smoothing">Compare filtering and smoothing</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">dlmModPoly</span>()</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>mod.filter <span class="ot">&lt;-</span> <span class="fu">dlmFilter</span>(phrase1<span class="sc">$</span>Frequency, mod)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>mod.smooth <span class="ot">&lt;-</span> <span class="fu">dlmSmooth</span>(mod.filter)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">data=</span>phrase1, <span class="at">x=</span><span class="sc">~</span>Year) <span class="sc">%&gt;%</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span><span class="sc">~</span>Frequency, <span class="at">name=</span><span class="st">'raw frequency'</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">type=</span><span class="st">'scatter'</span>, <span class="at">mode=</span><span class="st">'lines+markers'</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkolivegreen3'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>mod.filter<span class="sc">$</span>m[<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>], <span class="at">name=</span><span class="st">'filtering'</span>,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkolivegreen'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>mod.smooth<span class="sc">$</span>s[<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>], <span class="at">name=</span><span class="st">'smoothing'</span>,</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'violetred'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">title=</span><span class="st">'raining cats and dogs'</span>,</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>           <span class="at">yaxis=</span><span class="fu">list</span>(<span class="at">showexponent=</span><span class="st">'all'</span>,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>                      <span class="at">exponentformat=</span><span class="st">'e'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-4269af1b67cf02473253" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-4269af1b67cf02473253">{"x":{"visdat":{"311c18d7175c":["function () ","plotlyVisDat"]},"cur_data":"311c18d7175c","attrs":{"311c18d7175c":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"raw frequency","type":"scatter","mode":"lines+markers","color":["darkolivegreen3"],"inherit":true},"311c18d7175c.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.4146348228491452e-09,8.850581767033754e-09,1.018019355114959e-08,1.0735656207313151e-08,1.162628661664741e-08,1.1362905403673718e-08,1.2318128415676192e-08,1.3380029663373004e-08,1.364129609027867e-08,1.3382739340665753e-08,1.3264883416330205e-08,1.5790226448039818e-08,1.58907544016305e-08,1.5713322528695754e-08,1.4236861797930518e-08,1.4449738857392099e-08,1.5271969406917096e-08,1.7414650771456292e-08,1.7866842965985453e-08,1.7641573649021499e-08,2.0224405302792004e-08,1.9568982461613331e-08,2.2957385339199524e-08,2.4643121447979609e-08,2.7555870634020632e-08,2.692616762755508e-08,2.6006950672829385e-08,2.8045445191920854e-08,2.7736578590452301e-08,2.8541492466296808e-08,3.2899110458982058e-08,3.6509266058611727e-08,3.4486424693097744e-08,3.3005803693185127e-08,3.4981675583796032e-08,3.5761697197815107e-08,3.246218287426169e-08,3.444024953926062e-08,3.1752875585944031e-08,3.564067317454702e-08],"type":"scatter","mode":"lines","name":"filtering","color":["darkolivegreen"],"inherit":true},"311c18d7175c.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.122724019416622e-09,9.4894202071901746e-09,1.0148025954592169e-08,1.0751612165754482e-08,1.1301028015957502e-08,1.1742686104496035e-08,1.2431558980631975e-08,1.3028440975488768e-08,1.3328378053820196e-08,1.3602949232858183e-08,1.4243169893603149e-08,1.5191175129395433e-08,1.5367262613251055e-08,1.506804182669239e-08,1.4677201444266552e-08,1.4976518024090339e-08,1.5824660543852077e-08,1.6879600524230912e-08,1.7551914641616211e-08,1.8298229345623171e-08,1.9574264202493816e-08,2.0857182239894932e-08,2.2996625289788388e-08,2.4852786986046425e-08,2.6197648699882325e-08,2.6439128754028677e-08,2.6653840670399142e-08,2.7458328120991823e-08,2.837997514616454e-08,3.0255378903322777e-08,3.2843885041197558e-08,3.4362579298747921e-08,3.4214838384181991e-08,3.415066960103023e-08,3.457541778310892e-08,3.4305959986997783e-08,3.3436782699928994e-08,3.3485986388273684e-08,3.3760168957798215e-08,3.564067317454702e-08],"type":"scatter","mode":"lines","name":"smoothing","color":["violetred"],"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"raining cats and dogs","yaxis":{"domain":[0,1],"automargin":true,"showexponent":"all","exponentformat":"e","title":"Frequency"},"xaxis":{"domain":[0,1],"automargin":true,"title":"Year"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.4146352935808864e-09,8.8505807127603475e-09,1.0495804225740812e-08,1.0697175589768904e-08,1.1709587965924584e-08,1.1048507886357584e-08,1.2565810614262318e-08,1.3504974027966909e-08,1.3447814417588688e-08,1.3154068945198105e-08,1.3221332473278835e-08,1.6567486937901776e-08,1.5454341806275806e-08,1.5466129710262067e-08,1.3754093863838079e-08,1.4775820567081155e-08,1.5577265699562304e-08,1.7925650297456741e-08,1.7551007758243031e-08,1.7319672807047937e-08,2.0946743006788893e-08,1.8867734041805306e-08,2.3908413027129427e-08,2.4488723937565737e-08,2.7866343899063395e-08,2.5979058904113117e-08,2.5564681038758863e-08,2.8767541238039485e-08,2.7302723637490089e-08,2.8713118993550779e-08,3.4030176010446667e-08,3.6709209894070227e-08,3.2870175914467836e-08,3.2562201823793657e-08,3.5853027213761379e-08,3.5729573966136741e-08,3.1225280139324241e-08,3.5560731248551747e-08,3.0772504544529511e-08,3.7246994821771295e-08],"name":"raw frequency","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(162,205,90,1)","line":{"color":"rgba(162,205,90,1)"}},"textfont":{"color":"rgba(162,205,90,1)"},"error_y":{"color":"rgba(162,205,90,1)"},"error_x":{"color":"rgba(162,205,90,1)"},"line":{"color":"rgba(162,205,90,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.4146348228491452e-09,8.850581767033754e-09,1.018019355114959e-08,1.0735656207313151e-08,1.162628661664741e-08,1.1362905403673718e-08,1.2318128415676192e-08,1.3380029663373004e-08,1.364129609027867e-08,1.3382739340665753e-08,1.3264883416330205e-08,1.5790226448039818e-08,1.58907544016305e-08,1.5713322528695754e-08,1.4236861797930518e-08,1.4449738857392099e-08,1.5271969406917096e-08,1.7414650771456292e-08,1.7866842965985453e-08,1.7641573649021499e-08,2.0224405302792004e-08,1.9568982461613331e-08,2.2957385339199524e-08,2.4643121447979609e-08,2.7555870634020632e-08,2.692616762755508e-08,2.6006950672829385e-08,2.8045445191920854e-08,2.7736578590452301e-08,2.8541492466296808e-08,3.2899110458982058e-08,3.6509266058611727e-08,3.4486424693097744e-08,3.3005803693185127e-08,3.4981675583796032e-08,3.5761697197815107e-08,3.246218287426169e-08,3.444024953926062e-08,3.1752875585944031e-08,3.564067317454702e-08],"type":"scatter","mode":"lines","name":"filtering","marker":{"color":"rgba(85,107,47,1)","line":{"color":"rgba(85,107,47,1)"}},"textfont":{"color":"rgba(85,107,47,1)"},"error_y":{"color":"rgba(85,107,47,1)"},"error_x":{"color":"rgba(85,107,47,1)"},"line":{"color":"rgba(85,107,47,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.122724019416622e-09,9.4894202071901746e-09,1.0148025954592169e-08,1.0751612165754482e-08,1.1301028015957502e-08,1.1742686104496035e-08,1.2431558980631975e-08,1.3028440975488768e-08,1.3328378053820196e-08,1.3602949232858183e-08,1.4243169893603149e-08,1.5191175129395433e-08,1.5367262613251055e-08,1.506804182669239e-08,1.4677201444266552e-08,1.4976518024090339e-08,1.5824660543852077e-08,1.6879600524230912e-08,1.7551914641616211e-08,1.8298229345623171e-08,1.9574264202493816e-08,2.0857182239894932e-08,2.2996625289788388e-08,2.4852786986046425e-08,2.6197648699882325e-08,2.6439128754028677e-08,2.6653840670399142e-08,2.7458328120991823e-08,2.837997514616454e-08,3.0255378903322777e-08,3.2843885041197558e-08,3.4362579298747921e-08,3.4214838384181991e-08,3.415066960103023e-08,3.457541778310892e-08,3.4305959986997783e-08,3.3436782699928994e-08,3.3485986388273684e-08,3.3760168957798215e-08,3.564067317454702e-08],"type":"scatter","mode":"lines","name":"smoothing","marker":{"color":"rgba(208,32,144,1)","line":{"color":"rgba(208,32,144,1)"}},"textfont":{"color":"rgba(208,32,144,1)"},"error_y":{"color":"rgba(208,32,144,1)"},"error_x":{"color":"rgba(208,32,144,1)"},"line":{"color":"rgba(208,32,144,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+<section id="back-to-the-topic" class="level3">
+<h3 class="anchored" data-anchor-id="back-to-the-topic">Back to the topic</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>phrase1.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase1<span class="sc">$</span>Frequency)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">data=</span>phrase1, <span class="at">x=</span><span class="sc">~</span>Year) <span class="sc">%&gt;%</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span><span class="sc">~</span>Frequency, <span class="at">name=</span><span class="st">'raw frequency'</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">type=</span><span class="st">'scatter'</span>, <span class="at">mode=</span><span class="st">'lines+markers'</span>,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkolivegreen3'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.smoothed, </span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothed with dlm'</span>, </span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'steelblue2'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.smooth1<span class="sc">$</span>Frequency, </span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 1 with MA'</span>,</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkorchid'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.smooth2<span class="sc">$</span>Frequency,</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 2 with MA'</span>,</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">"darkorange1"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">title=</span><span class="st">"Smoothing curves of 'raining cats and dogs'"</span>,</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">yaxis=</span><span class="fu">list</span>(<span class="at">showexponent=</span><span class="st">'all'</span>,</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>                      <span class="at">exponentformat=</span><span class="st">'e'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-917907255571adb1d53d" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-917907255571adb1d53d">{"x":{"visdat":{"311c6e4b46c4":["function () ","plotlyVisDat"]},"cur_data":"311c6e4b46c4","attrs":{"311c6e4b46c4":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"raw frequency","type":"scatter","mode":"lines+markers","color":["darkolivegreen3"],"inherit":true},"311c6e4b46c4.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.122724019416622e-09,9.4894202071901746e-09,1.0148025954592169e-08,1.0751612165754482e-08,1.1301028015957502e-08,1.1742686104496035e-08,1.2431558980631975e-08,1.3028440975488768e-08,1.3328378053820196e-08,1.3602949232858183e-08,1.4243169893603149e-08,1.5191175129395433e-08,1.5367262613251055e-08,1.506804182669239e-08,1.4677201444266552e-08,1.4976518024090339e-08,1.5824660543852077e-08,1.6879600524230912e-08,1.7551914641616211e-08,1.8298229345623171e-08,1.9574264202493816e-08,2.0857182239894932e-08,2.2996625289788388e-08,2.4852786986046425e-08,2.6197648699882325e-08,2.6439128754028677e-08,2.6653840670399142e-08,2.7458328120991823e-08,2.837997514616454e-08,3.0255378903322777e-08,3.2843885041197558e-08,3.4362579298747921e-08,3.4214838384181991e-08,3.415066960103023e-08,3.457541778310892e-08,3.4305959986997783e-08,3.3436782699928994e-08,3.3485986388273684e-08,3.3760168957798215e-08,3.564067317454702e-08],"type":"scatter","mode":"lines","name":"smoothed with dlm","color":["steelblue2"],"inherit":true},"311c6e4b46c4.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.1326080031706169e-09,9.5870067440273488e-09,1.0014520176090022e-08,1.0967522593811433e-08,1.1151757147350358e-08,1.1774635488848162e-08,1.2373097509528938e-08,1.3172866353272639e-08,1.3368952463584568e-08,1.3274405278688542e-08,1.4314296118792905e-08,1.5081053739152139e-08,1.5829319484813215e-08,1.4891521793458651e-08,1.4665348047060434e-08,1.470239337682718e-08,1.6092912188033399e-08,1.7017974585087359e-08,1.7598776954249235e-08,1.8605807857359952e-08,1.904471661854738e-08,2.1240963358574543e-08,2.242162366883349e-08,2.542116028791952e-08,2.6111375580247415e-08,2.6470027947311792e-08,2.677042706030382e-08,2.7211648638096147e-08,2.8261127956360117e-08,3.0015339547162512e-08,3.3150834966022558e-08,3.4536520606328246e-08,3.4047195877443905e-08,3.3761801650674293e-08,3.4714934334563928e-08,3.4269293773074118e-08,3.4171861784670909e-08,3.2519505310801833e-08,3.4526743538284187e-08,3.4009749683150403e-08],"type":"scatter","mode":"lines","name":"smoothing 1 with MA","color":["darkorchid"],"inherit":true},"311c6e4b46c4.3":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.5870067440273488e-09,9.8645489554627375e-09,1.0233556757555106e-08,1.0560331276110446e-08,1.1303377256410841e-08,1.1905211216856059e-08,1.2455338982420017e-08,1.274423517827472e-08,1.3178800095658972e-08,1.3979135360386862e-08,1.4369008916048643e-08,1.4772671974583318e-08,1.4892676958311312e-08,1.5203574577071776e-08,1.5005530329403882e-08,1.5499792027640068e-08,1.5916767637236261e-08,1.6629883425878233e-08,1.786406791381978e-08,1.8522161582268382e-08,1.9718714128202917e-08,2.1106257364067459e-08,2.321559158247055e-08,2.4222054761935396e-08,2.5561444161326109e-08,2.6533269803508119e-08,2.7096069743492988e-08,2.7265424762390466e-08,2.8875648183657178e-08,3.1104553954719448e-08,3.1925080890005121e-08,3.2976976527265831e-08,3.4404958171307956e-08,3.4744837762445969e-08,3.364805181149677e-08,3.4186162878313554e-08,3.3828223422460725e-08,3.410701694406271e-08,3.3701377688544198e-08,3.4526743538284187e-08],"type":"scatter","mode":"lines","name":"smoothing 2 with MA","color":["darkorange1"],"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Smoothing curves of 'raining cats and dogs'","yaxis":{"domain":[0,1],"automargin":true,"showexponent":"all","exponentformat":"e","title":"Frequency"},"xaxis":{"domain":[0,1],"automargin":true,"title":"Year"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.4146352935808864e-09,8.8505807127603475e-09,1.0495804225740812e-08,1.0697175589768904e-08,1.1709587965924584e-08,1.1048507886357584e-08,1.2565810614262318e-08,1.3504974027966909e-08,1.3447814417588688e-08,1.3154068945198105e-08,1.3221332473278835e-08,1.6567486937901776e-08,1.5454341806275806e-08,1.5466129710262067e-08,1.3754093863838079e-08,1.4775820567081155e-08,1.5577265699562304e-08,1.7925650297456741e-08,1.7551007758243031e-08,1.7319672807047937e-08,2.0946743006788893e-08,1.8867734041805306e-08,2.3908413027129427e-08,2.4488723937565737e-08,2.7866343899063395e-08,2.5979058904113117e-08,2.5564681038758863e-08,2.8767541238039485e-08,2.7302723637490089e-08,2.8713118993550779e-08,3.4030176010446667e-08,3.6709209894070227e-08,3.2870175914467836e-08,3.2562201823793657e-08,3.5853027213761379e-08,3.5729573966136741e-08,3.1225280139324241e-08,3.5560731248551747e-08,3.0772504544529511e-08,3.7246994821771295e-08],"name":"raw frequency","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(162,205,90,1)","line":{"color":"rgba(162,205,90,1)"}},"textfont":{"color":"rgba(162,205,90,1)"},"error_y":{"color":"rgba(162,205,90,1)"},"error_x":{"color":"rgba(162,205,90,1)"},"line":{"color":"rgba(162,205,90,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.122724019416622e-09,9.4894202071901746e-09,1.0148025954592169e-08,1.0751612165754482e-08,1.1301028015957502e-08,1.1742686104496035e-08,1.2431558980631975e-08,1.3028440975488768e-08,1.3328378053820196e-08,1.3602949232858183e-08,1.4243169893603149e-08,1.5191175129395433e-08,1.5367262613251055e-08,1.506804182669239e-08,1.4677201444266552e-08,1.4976518024090339e-08,1.5824660543852077e-08,1.6879600524230912e-08,1.7551914641616211e-08,1.8298229345623171e-08,1.9574264202493816e-08,2.0857182239894932e-08,2.2996625289788388e-08,2.4852786986046425e-08,2.6197648699882325e-08,2.6439128754028677e-08,2.6653840670399142e-08,2.7458328120991823e-08,2.837997514616454e-08,3.0255378903322777e-08,3.2843885041197558e-08,3.4362579298747921e-08,3.4214838384181991e-08,3.415066960103023e-08,3.457541778310892e-08,3.4305959986997783e-08,3.3436782699928994e-08,3.3485986388273684e-08,3.3760168957798215e-08,3.564067317454702e-08],"type":"scatter","mode":"lines","name":"smoothed with dlm","marker":{"color":"rgba(92,172,238,1)","line":{"color":"rgba(92,172,238,1)"}},"textfont":{"color":"rgba(92,172,238,1)"},"error_y":{"color":"rgba(92,172,238,1)"},"error_x":{"color":"rgba(92,172,238,1)"},"line":{"color":"rgba(92,172,238,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.1326080031706169e-09,9.5870067440273488e-09,1.0014520176090022e-08,1.0967522593811433e-08,1.1151757147350358e-08,1.1774635488848162e-08,1.2373097509528938e-08,1.3172866353272639e-08,1.3368952463584568e-08,1.3274405278688542e-08,1.4314296118792905e-08,1.5081053739152139e-08,1.5829319484813215e-08,1.4891521793458651e-08,1.4665348047060434e-08,1.470239337682718e-08,1.6092912188033399e-08,1.7017974585087359e-08,1.7598776954249235e-08,1.8605807857359952e-08,1.904471661854738e-08,2.1240963358574543e-08,2.242162366883349e-08,2.542116028791952e-08,2.6111375580247415e-08,2.6470027947311792e-08,2.677042706030382e-08,2.7211648638096147e-08,2.8261127956360117e-08,3.0015339547162512e-08,3.3150834966022558e-08,3.4536520606328246e-08,3.4047195877443905e-08,3.3761801650674293e-08,3.4714934334563928e-08,3.4269293773074118e-08,3.4171861784670909e-08,3.2519505310801833e-08,3.4526743538284187e-08,3.4009749683150403e-08],"type":"scatter","mode":"lines","name":"smoothing 1 with MA","marker":{"color":"rgba(153,50,204,1)","line":{"color":"rgba(153,50,204,1)"}},"textfont":{"color":"rgba(153,50,204,1)"},"error_y":{"color":"rgba(153,50,204,1)"},"error_x":{"color":"rgba(153,50,204,1)"},"line":{"color":"rgba(153,50,204,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.5870067440273488e-09,9.8645489554627375e-09,1.0233556757555106e-08,1.0560331276110446e-08,1.1303377256410841e-08,1.1905211216856059e-08,1.2455338982420017e-08,1.274423517827472e-08,1.3178800095658972e-08,1.3979135360386862e-08,1.4369008916048643e-08,1.4772671974583318e-08,1.4892676958311312e-08,1.5203574577071776e-08,1.5005530329403882e-08,1.5499792027640068e-08,1.5916767637236261e-08,1.6629883425878233e-08,1.786406791381978e-08,1.8522161582268382e-08,1.9718714128202917e-08,2.1106257364067459e-08,2.321559158247055e-08,2.4222054761935396e-08,2.5561444161326109e-08,2.6533269803508119e-08,2.7096069743492988e-08,2.7265424762390466e-08,2.8875648183657178e-08,3.1104553954719448e-08,3.1925080890005121e-08,3.2976976527265831e-08,3.4404958171307956e-08,3.4744837762445969e-08,3.364805181149677e-08,3.4186162878313554e-08,3.3828223422460725e-08,3.410701694406271e-08,3.3701377688544198e-08,3.4526743538284187e-08],"type":"scatter","mode":"lines","name":"smoothing 2 with MA","marker":{"color":"rgba(255,127,0,1)","line":{"color":"rgba(255,127,0,1)"}},"textfont":{"color":"rgba(255,127,0,1)"},"error_y":{"color":"rgba(255,127,0,1)"},"error_x":{"color":"rgba(255,127,0,1)"},"line":{"color":"rgba(255,127,0,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+</section>
+<section id="different-corpus-different-results" class="level2">
+<h2 class="anchored" data-anchor-id="different-corpus-different-results">Different corpus, different results</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>phrase1.us <span class="ot">&lt;-</span> <span class="fu">ngram</span>(<span class="st">'raining cats and dogs'</span>,</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">corpus=</span><span class="st">'en-US-2019'</span>, <span class="at">year_start=</span><span class="dv">1980</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>phrase1.gb <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE1, <span class="at">corpus=</span><span class="st">'en-GB-2019'</span>, </span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">year_start=</span><span class="dv">1980</span>, <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>phrase1.fic <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE1, <span class="at">corpus=</span><span class="st">'en-fiction-2019'</span>, </span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">year_start=</span><span class="dv">1980</span>, <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>phrase1.us.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase1.us<span class="sc">$</span>Frequency)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>phrase1.gb.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase1.gb<span class="sc">$</span>Frequency)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>phrase1.fic.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase1.fic<span class="sc">$</span>Frequency)</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">data=</span>phrase1.us, <span class="at">x=</span><span class="sc">~</span>Year) <span class="sc">%&gt;%</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span><span class="sc">~</span>Frequency, </span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'American english'</span>,</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'lightsteelblue3'</span>), <span class="at">type=</span><span class="st">'scatter'</span>, </span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>              <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.us.smoothed, </span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'American english (smoothed)'</span>, </span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'steelblue4'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span>phrase1.gb<span class="sc">$</span>Frequency, </span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'British english'</span>,</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'violet'</span>), <span class="at">type=</span><span class="st">'scatter'</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>              <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.gb.smoothed,</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'British english (smoothed)'</span>,</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'violetred'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span>phrase1.fic<span class="sc">$</span>Frequency, </span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'fiction books'</span>, </span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'orange'</span>), <span class="at">type=</span><span class="st">'scatter'</span>,</span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>              <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase1.fic.smoothed,</span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'fiction books (smoothed)'</span>,</span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'orangered'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">title=</span><span class="st">"Usage of 'raining cats and dogs', categorized by corpus"</span>,</span>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a>           <span class="at">yaxis=</span><span class="fu">list</span>(<span class="at">showexponent=</span><span class="st">'all'</span>,</span>
+<span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>                      <span class="at">exponentformat=</span><span class="st">'e'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-40fd007a77b8f54fc924" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-40fd007a77b8f54fc924">{"x":{"visdat":{"311c3c0f6a84":["function () ","plotlyVisDat"]},"cur_data":"311c3c0f6a84","attrs":{"311c3c0f6a84":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"American english","color":["lightsteelblue3"],"type":"scatter","mode":"lines+markers","inherit":true},"311c3c0f6a84.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[8.5553030037113064e-09,8.8159213792006915e-09,9.1901344942224641e-09,9.2201220352402632e-09,9.6121524510653029e-09,1.062667699352345e-08,1.1951531582213143e-08,1.292728624330971e-08,1.3539385117061052e-08,1.3253105876419865e-08,1.316785507809914e-08,1.3789356245733871e-08,1.4112895078589729e-08,1.435549739612298e-08,1.4526059278334584e-08,1.4823346097980929e-08,1.5623445572832646e-08,1.6597854376650638e-08,1.6964679044418193e-08,1.8031561148153154e-08,1.9861471621561164e-08,2.1444277999377963e-08,2.3147976495537914e-08,2.4810187046139481e-08,2.5647154120714729e-08,2.5783944287265358e-08,2.552997403996984e-08,2.5721821768416133e-08,2.6379361475143009e-08,2.808351460862885e-08,3.0075608734925111e-08,3.1528073215902527e-08,3.2270368222846436e-08,3.2472937438058261e-08,3.2021506005422515e-08,3.2381007622601817e-08,3.3763072190100768e-08,3.5645000152729953e-08,3.6313520905947671e-08,3.7693297931309097e-08],"type":"scatter","mode":"lines","name":"American english (smoothed)","color":["steelblue4"],"inherit":true},"311c3c0f6a84.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[1.3142139820843113e-08,5.7081850357576513e-09,8.7713907248598844e-09,1.4502924194914613e-08,2.3000639615133878e-08,1.9275287144182585e-08,1.9770544312791571e-08,1.9547179874734866e-08,9.818846180564833e-09,1.7398532392576271e-08,1.6257676094255658e-08,2.4561549238910629e-08,2.2918571929153586e-08,1.3836061185656945e-08,1.071205524283414e-08,1.3076438598602635e-08,1.4065708597854609e-08,1.1710110214835368e-08,1.8984151139989081e-08,1.5251989893272366e-08,1.6749556408512944e-08,1.6541216396603886e-08,2.1417594808781359e-08,2.2965249257822506e-08,3.5226818795308645e-08,2.1281202577938529e-08,2.3949985106241911e-08,2.711784574671583e-08,3.1708964343124535e-08,3.2611058742304522e-08,3.6306936124219646e-08,3.7577411404754457e-08,3.980084883892232e-08,3.2100317071126483e-08,3.9336217838581433e-08,3.3924226983117478e-08,2.374135732452487e-08,3.7603832936383697e-08,4.1682682194732479e-08,3.5074872783980027e-08],"name":"British english","color":["violet"],"type":"scatter","mode":"lines+markers","inherit":true},"311c3c0f6a84.3":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[1.0256750535133379e-08,9.0767324875643601e-09,1.0782101320348644e-08,1.488969772371382e-08,1.8905651792397431e-08,1.9949320092337816e-08,1.9235047012209763e-08,1.7303143992532825e-08,1.5229419774408377e-08,1.6333718981139828e-08,1.8525312642187038e-08,2.0778285198446324e-08,1.9799084542882598e-08,1.6077422608925088e-08,1.3222498716274022e-08,1.2602150761361478e-08,1.3073773167179656e-08,1.3969048193961912e-08,1.5611593532616551e-08,1.6066088894925336e-08,1.6769771600042561e-08,1.8345779965469547e-08,2.1397037117178007e-08,2.472190261227399e-08,2.7139293699466897e-08,2.5711474273014644e-08,2.5588233323016916e-08,2.7489088144497283e-08,3.04953078157043e-08,3.3316919017105073e-08,3.5877604956586949e-08,3.7395188567236722e-08,3.7516823949773859e-08,3.6071888042435568e-08,3.5173782672607533e-08,3.2964338696366338e-08,3.1747822135762484e-08,3.4788387299597599e-08,3.7343723685435705e-08,3.7486966427626919e-08],"type":"scatter","mode":"lines","name":"British english (smoothed)","color":["violetred"],"inherit":true},"311c3c0f6a84.4":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[3.5505610895825157e-08,4.5631640688270636e-08,4.0134864320862107e-08,8.6116777708866721e-08,8.1662641093771526e-08,7.0205672386691731e-08,6.529238305574836e-08,6.6745478477514553e-08,7.1039494287106209e-08,4.5894012146163732e-08,7.3059574390299531e-08,7.0058270296158298e-08,6.3719625131852808e-08,5.5708117230324206e-08,4.0078969476553539e-08,8.0408092628658778e-08,6.2018557400733698e-08,8.3833597841476148e-08,5.6562008410310227e-08,6.516913941823077e-08,6.7182163832057995e-08,5.4919642167305938e-08,6.9353518483694643e-08,7.0967224985452049e-08,7.5318027370485652e-08,6.9874772634648252e-08,5.1739995399202598e-08,6.0143968028114614e-08,5.4396270598999763e-08,5.9432284871263619e-08,6.2229005948211125e-08,6.4127824828119628e-08,6.1082502611498057e-08,6.3951326012556819e-08,5.6236991952118842e-08,5.4770627144762329e-08,5.8307286110448331e-08,5.5581647728786265e-08,5.2450186416308497e-08,5.4956132089500898e-08],"name":"fiction books","color":["orange"],"type":"scatter","mode":"lines+markers","inherit":true},"311c3c0f6a84.5":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[3.4244072241593499e-08,4.4480719267157751e-08,5.5978901169133196e-08,7.1151075622122532e-08,7.656566345245687e-08,7.375678757321148e-08,6.9355548538776248e-08,6.6441931717021352e-08,6.4032756992789096e-08,6.1448391011414958e-08,6.5015937712551565e-08,6.5508122170600283e-08,6.174130613771044e-08,5.7081999491589346e-08,5.6875031104086702e-08,6.5091347585787074e-08,6.8905833919741843e-08,7.0810120131874131e-08,6.6408559729098933e-08,6.4328983927933247e-08,6.335267262610542e-08,6.3101061211641267e-08,6.7025076278519247e-08,7.0394225376382475e-08,7.0806458260049451e-08,6.6432724293408204e-08,5.9955541950783062e-08,5.7499478047738378e-08,5.6973552848258002e-08,5.893127659670205e-08,6.1348877288172394e-08,6.2703591192332478e-08,6.2352783238884476e-08,6.1078051993317747e-08,5.8390715393735154e-08,5.6675365397478704e-08,5.6162870520274069e-08,5.5179361025130561e-08,5.4195382765231752e-08,5.408376829741692e-08],"type":"scatter","mode":"lines","name":"fiction books (smoothed)","color":["orangered"],"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Usage of 'raining cats and dogs', categorized by corpus","yaxis":{"domain":[0,1],"automargin":true,"showexponent":"all","exponentformat":"e","title":"Frequency"},"xaxis":{"domain":[0,1],"automargin":true,"title":"Year"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[8.6688993761185884e-09,8.2445055227253761e-09,1.0354223256570094e-08,8.7743048382549205e-09,9.0395371188378704e-09,1.0279411100100333e-08,1.2596405696285728e-08,1.2407119776014497e-08,1.5173514000821342e-08,1.2659422843341872e-08,1.1657417253729818e-08,1.5011096365924459e-08,1.3904765339134428e-08,1.4545366688878403e-08,1.4703381623348832e-08,1.4118755053971199e-08,1.517005543405503e-08,1.8687389413685196e-08,1.572000840610599e-08,1.6958457749183253e-08,2.1239600300759776e-08,2.0913901721542061e-08,2.2526601028971527e-08,2.5719009144609117e-08,2.5831504046891496e-08,2.6311106182674848e-08,2.4713269652920644e-08,2.6282869214355742e-08,2.5039767592716089e-08,2.8014616404448134e-08,3.073263954433969e-08,3.1869056726918643e-08,3.1985649684429518e-08,3.4052145991836369e-08,3.0768202208264483e-08,3.1646678166907805e-08,3.25725011407485e-08,3.9282934238826783e-08,3.3677601152248826e-08,3.840455420345279e-08],"name":"American english","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(162,181,205,1)","line":{"color":"rgba(162,181,205,1)"}},"textfont":{"color":"rgba(162,181,205,1)"},"error_y":{"color":"rgba(162,181,205,1)"},"error_x":{"color":"rgba(162,181,205,1)"},"line":{"color":"rgba(162,181,205,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[8.5553030037113064e-09,8.8159213792006915e-09,9.1901344942224641e-09,9.2201220352402632e-09,9.6121524510653029e-09,1.062667699352345e-08,1.1951531582213143e-08,1.292728624330971e-08,1.3539385117061052e-08,1.3253105876419865e-08,1.316785507809914e-08,1.3789356245733871e-08,1.4112895078589729e-08,1.435549739612298e-08,1.4526059278334584e-08,1.4823346097980929e-08,1.5623445572832646e-08,1.6597854376650638e-08,1.6964679044418193e-08,1.8031561148153154e-08,1.9861471621561164e-08,2.1444277999377963e-08,2.3147976495537914e-08,2.4810187046139481e-08,2.5647154120714729e-08,2.5783944287265358e-08,2.552997403996984e-08,2.5721821768416133e-08,2.6379361475143009e-08,2.808351460862885e-08,3.0075608734925111e-08,3.1528073215902527e-08,3.2270368222846436e-08,3.2472937438058261e-08,3.2021506005422515e-08,3.2381007622601817e-08,3.3763072190100768e-08,3.5645000152729953e-08,3.6313520905947671e-08,3.7693297931309097e-08],"type":"scatter","mode":"lines","name":"American english (smoothed)","marker":{"color":"rgba(54,100,139,1)","line":{"color":"rgba(54,100,139,1)"}},"textfont":{"color":"rgba(54,100,139,1)"},"error_y":{"color":"rgba(54,100,139,1)"},"error_x":{"color":"rgba(54,100,139,1)"},"line":{"color":"rgba(54,100,139,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[1.3142139820843113e-08,5.7081850357576513e-09,8.7713907248598844e-09,1.4502924194914613e-08,2.3000639615133878e-08,1.9275287144182585e-08,1.9770544312791571e-08,1.9547179874734866e-08,9.818846180564833e-09,1.7398532392576271e-08,1.6257676094255658e-08,2.4561549238910629e-08,2.2918571929153586e-08,1.3836061185656945e-08,1.071205524283414e-08,1.3076438598602635e-08,1.4065708597854609e-08,1.1710110214835368e-08,1.8984151139989081e-08,1.5251989893272366e-08,1.6749556408512944e-08,1.6541216396603886e-08,2.1417594808781359e-08,2.2965249257822506e-08,3.5226818795308645e-08,2.1281202577938529e-08,2.3949985106241911e-08,2.711784574671583e-08,3.1708964343124535e-08,3.2611058742304522e-08,3.6306936124219646e-08,3.7577411404754457e-08,3.980084883892232e-08,3.2100317071126483e-08,3.9336217838581433e-08,3.3924226983117478e-08,2.374135732452487e-08,3.7603832936383697e-08,4.1682682194732479e-08,3.5074872783980027e-08],"name":"British english","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(238,130,238,1)","line":{"color":"rgba(238,130,238,1)"}},"textfont":{"color":"rgba(238,130,238,1)"},"error_y":{"color":"rgba(238,130,238,1)"},"error_x":{"color":"rgba(238,130,238,1)"},"line":{"color":"rgba(238,130,238,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[1.0256750535133379e-08,9.0767324875643601e-09,1.0782101320348644e-08,1.488969772371382e-08,1.8905651792397431e-08,1.9949320092337816e-08,1.9235047012209763e-08,1.7303143992532825e-08,1.5229419774408377e-08,1.6333718981139828e-08,1.8525312642187038e-08,2.0778285198446324e-08,1.9799084542882598e-08,1.6077422608925088e-08,1.3222498716274022e-08,1.2602150761361478e-08,1.3073773167179656e-08,1.3969048193961912e-08,1.5611593532616551e-08,1.6066088894925336e-08,1.6769771600042561e-08,1.8345779965469547e-08,2.1397037117178007e-08,2.472190261227399e-08,2.7139293699466897e-08,2.5711474273014644e-08,2.5588233323016916e-08,2.7489088144497283e-08,3.04953078157043e-08,3.3316919017105073e-08,3.5877604956586949e-08,3.7395188567236722e-08,3.7516823949773859e-08,3.6071888042435568e-08,3.5173782672607533e-08,3.2964338696366338e-08,3.1747822135762484e-08,3.4788387299597599e-08,3.7343723685435705e-08,3.7486966427626919e-08],"type":"scatter","mode":"lines","name":"British english (smoothed)","marker":{"color":"rgba(208,32,144,1)","line":{"color":"rgba(208,32,144,1)"}},"textfont":{"color":"rgba(208,32,144,1)"},"error_y":{"color":"rgba(208,32,144,1)"},"error_x":{"color":"rgba(208,32,144,1)"},"line":{"color":"rgba(208,32,144,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[3.5505610895825157e-08,4.5631640688270636e-08,4.0134864320862107e-08,8.6116777708866721e-08,8.1662641093771526e-08,7.0205672386691731e-08,6.529238305574836e-08,6.6745478477514553e-08,7.1039494287106209e-08,4.5894012146163732e-08,7.3059574390299531e-08,7.0058270296158298e-08,6.3719625131852808e-08,5.5708117230324206e-08,4.0078969476553539e-08,8.0408092628658778e-08,6.2018557400733698e-08,8.3833597841476148e-08,5.6562008410310227e-08,6.516913941823077e-08,6.7182163832057995e-08,5.4919642167305938e-08,6.9353518483694643e-08,7.0967224985452049e-08,7.5318027370485652e-08,6.9874772634648252e-08,5.1739995399202598e-08,6.0143968028114614e-08,5.4396270598999763e-08,5.9432284871263619e-08,6.2229005948211125e-08,6.4127824828119628e-08,6.1082502611498057e-08,6.3951326012556819e-08,5.6236991952118842e-08,5.4770627144762329e-08,5.8307286110448331e-08,5.5581647728786265e-08,5.2450186416308497e-08,5.4956132089500898e-08],"name":"fiction books","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(255,165,0,1)","line":{"color":"rgba(255,165,0,1)"}},"textfont":{"color":"rgba(255,165,0,1)"},"error_y":{"color":"rgba(255,165,0,1)"},"error_x":{"color":"rgba(255,165,0,1)"},"line":{"color":"rgba(255,165,0,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[3.4244072241593499e-08,4.4480719267157751e-08,5.5978901169133196e-08,7.1151075622122532e-08,7.656566345245687e-08,7.375678757321148e-08,6.9355548538776248e-08,6.6441931717021352e-08,6.4032756992789096e-08,6.1448391011414958e-08,6.5015937712551565e-08,6.5508122170600283e-08,6.174130613771044e-08,5.7081999491589346e-08,5.6875031104086702e-08,6.5091347585787074e-08,6.8905833919741843e-08,7.0810120131874131e-08,6.6408559729098933e-08,6.4328983927933247e-08,6.335267262610542e-08,6.3101061211641267e-08,6.7025076278519247e-08,7.0394225376382475e-08,7.0806458260049451e-08,6.6432724293408204e-08,5.9955541950783062e-08,5.7499478047738378e-08,5.6973552848258002e-08,5.893127659670205e-08,6.1348877288172394e-08,6.2703591192332478e-08,6.2352783238884476e-08,6.1078051993317747e-08,5.8390715393735154e-08,5.6675365397478704e-08,5.6162870520274069e-08,5.5179361025130561e-08,5.4195382765231752e-08,5.408376829741692e-08],"type":"scatter","mode":"lines","name":"fiction books (smoothed)","marker":{"color":"rgba(255,69,0,1)","line":{"color":"rgba(255,69,0,1)"}},"textfont":{"color":"rgba(255,69,0,1)"},"error_y":{"color":"rgba(255,69,0,1)"},"error_x":{"color":"rgba(255,69,0,1)"},"line":{"color":"rgba(255,69,0,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+</section>
+<section id="do-we-still-say-come-rain-or-shine" class="level1">
+<h1>Do we still say <em>come rain or shine</em>?</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>PHRASE2 <span class="ot">&lt;-</span> <span class="st">'come rain or shine'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>phrase2 <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE2, <span class="at">year_start=</span><span class="dv">1980</span>, <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>phrase2.smooth1 <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE2, <span class="at">year_start=</span><span class="dv">1980</span>,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smoothing=</span><span class="dv">1</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>phrase2.smooth2 <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE2, <span class="at">year_start=</span><span class="dv">1980</span>, </span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smoothing=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">data=</span>phrase2, <span class="at">x=</span><span class="sc">~</span>Year) <span class="sc">%&gt;%</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span><span class="sc">~</span>Frequency, <span class="at">name=</span><span class="st">'raw frequency'</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkolivegreen3'</span>),</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">type=</span><span class="st">'scatter'</span>, <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.smooth1<span class="sc">$</span>Frequency, </span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 1 frequency'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.smooth2<span class="sc">$</span>Frequency,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 2 frequency'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">title=</span><span class="st">"Smoothing 'come rain or shine' using MA"</span>,</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">yaxis=</span><span class="fu">list</span>(<span class="at">showexponent=</span><span class="st">'all'</span>,</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>                      <span class="at">exponentformat=</span><span class="st">'e'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-f54092d6b86e19b2e832" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-f54092d6b86e19b2e832">{"x":{"visdat":{"311c7d4e162a":["function () ","plotlyVisDat"]},"cur_data":"311c7d4e162a","attrs":{"311c7d4e162a":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"raw frequency","color":["darkolivegreen3"],"type":"scatter","mode":"lines+markers","inherit":true},"311c7d4e162a.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[2.4525855790713535e-09,2.4547293827244707e-09,3.2687038261277244e-09,3.4099238988005709e-09,4.0488004060534877e-09,4.0783530626716429e-09,5.0850605208078532e-09,4.7649510263407064e-09,4.343519247977194e-09,3.3267910648504539e-09,3.2110361036785662e-09,3.7273158633629082e-09,4.0492476779026747e-09,4.4794605062274213e-09,4.5356176592292741e-09,4.8995330755493187e-09,5.2839350672684304e-09,6.088917666365508e-09,6.1876527605401561e-09,6.5128715753814959e-09,6.1971109725315427e-09,6.9965445289218069e-09,7.4742170970883616e-09,8.2351580369769782e-09,8.9170830719353944e-09,9.5690255719205197e-09,1.0112138385901895e-08,1.0298215613602224e-08,1.1115181663967633e-08,1.3196009914414239e-08,1.5011567396546372e-08,1.5870741757832246e-08,1.526943223713791e-08,1.5368085174808737e-08,1.5539717364750533e-08,1.6456888000485986e-08,1.5802277412528081e-08,1.5016467476887858e-08,1.3190029513054924e-08,1.2515617431319015e-08],"type":"scatter","mode":"lines","name":"smoothing 1 frequency","inherit":true},"311c7d4e162a.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[2.4547293827244707e-09,2.9252202327079146e-09,3.0269885709088839e-09,3.5231639827770778e-09,3.8061537921407764e-09,4.6051872537589137e-09,4.4209123029048669e-09,4.3663110016467502e-09,4.1719816490370931e-09,3.9005221275090207e-09,3.5516642071797832e-09,3.7425596399742743e-09,3.9820868824591571e-09,4.2769601638070752e-09,4.7556578230967263e-09,4.9160584048024704e-09,5.500762156884775e-09,5.7805731756843669e-09,6.1024107544938035e-09,6.2793088950741092e-09,6.8081388526763934e-09,6.9335904129275148e-09,7.5078120609362035e-09,8.2506657506087329e-09,8.956739172560902e-09,9.3771683751242563e-09,9.9450648605170496e-09,1.0684753348755294e-08,1.1944524480611562e-08,1.3210589955292562e-08,1.4139915371913503e-08,1.4927254454732973e-08,1.5762332061797223e-08,1.5546139842115279e-08,1.579444681709674e-08,1.5721253454614726e-08,1.5394360985965251e-08,1.4487613420044454e-08,1.4254587510365013e-08,1.3190029513054924e-08],"type":"scatter","mode":"lines","name":"smoothing 2 frequency","inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Smoothing 'come rain or shine' using MA","yaxis":{"domain":[0,1],"automargin":true,"showexponent":"all","exponentformat":"e","title":"Frequency"},"xaxis":{"domain":[0,1],"automargin":true,"title":"Year"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[1.8947694524484859e-09,3.0104017056942212e-09,2.4590169900307046e-09,4.3366927826582469e-09,3.4340619237127612e-09,4.375646511789455e-09,4.4253507525127134e-09,6.4541842981213904e-09,3.4153180283880147e-09,3.1610554174221761e-09,3.4039997487411711e-09,3.0680531448723514e-09,4.7098946964752031e-09,4.3697951923604705e-09,4.3586916298465894e-09,4.8783661554807622e-09,5.4615414413206054e-09,5.5118976050039237e-09,7.2933139527719959e-09,5.7577467238445479e-09,6.4875540495279438e-09,6.3460321442221357e-09,8.1560473930153421e-09,7.9205717540276055e-09,8.6288549638879886e-09,1.0201822497890589e-08,9.8763992539829815e-09,1.0258193405832117e-08,1.0760054180991574e-08,1.2327297405079207e-08,1.6500678157171933e-08,1.620672662738798e-08,1.4904820488936821e-08,1.4696749595088932e-08,1.6502685440400455e-08,1.5419717058762217e-08,1.7448261502295281e-08,1.4538853676526742e-08,1.3062287251841553e-08,1.1968947610796477e-08],"name":"raw frequency","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(162,205,90,1)","line":{"color":"rgba(162,205,90,1)"}},"textfont":{"color":"rgba(162,205,90,1)"},"error_y":{"color":"rgba(162,205,90,1)"},"error_x":{"color":"rgba(162,205,90,1)"},"line":{"color":"rgba(162,205,90,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[2.4525855790713535e-09,2.4547293827244707e-09,3.2687038261277244e-09,3.4099238988005709e-09,4.0488004060534877e-09,4.0783530626716429e-09,5.0850605208078532e-09,4.7649510263407064e-09,4.343519247977194e-09,3.3267910648504539e-09,3.2110361036785662e-09,3.7273158633629082e-09,4.0492476779026747e-09,4.4794605062274213e-09,4.5356176592292741e-09,4.8995330755493187e-09,5.2839350672684304e-09,6.088917666365508e-09,6.1876527605401561e-09,6.5128715753814959e-09,6.1971109725315427e-09,6.9965445289218069e-09,7.4742170970883616e-09,8.2351580369769782e-09,8.9170830719353944e-09,9.5690255719205197e-09,1.0112138385901895e-08,1.0298215613602224e-08,1.1115181663967633e-08,1.3196009914414239e-08,1.5011567396546372e-08,1.5870741757832246e-08,1.526943223713791e-08,1.5368085174808737e-08,1.5539717364750533e-08,1.6456888000485986e-08,1.5802277412528081e-08,1.5016467476887858e-08,1.3190029513054924e-08,1.2515617431319015e-08],"type":"scatter","mode":"lines","name":"smoothing 1 frequency","marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"line":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[2.4547293827244707e-09,2.9252202327079146e-09,3.0269885709088839e-09,3.5231639827770778e-09,3.8061537921407764e-09,4.6051872537589137e-09,4.4209123029048669e-09,4.3663110016467502e-09,4.1719816490370931e-09,3.9005221275090207e-09,3.5516642071797832e-09,3.7425596399742743e-09,3.9820868824591571e-09,4.2769601638070752e-09,4.7556578230967263e-09,4.9160584048024704e-09,5.500762156884775e-09,5.7805731756843669e-09,6.1024107544938035e-09,6.2793088950741092e-09,6.8081388526763934e-09,6.9335904129275148e-09,7.5078120609362035e-09,8.2506657506087329e-09,8.956739172560902e-09,9.3771683751242563e-09,9.9450648605170496e-09,1.0684753348755294e-08,1.1944524480611562e-08,1.3210589955292562e-08,1.4139915371913503e-08,1.4927254454732973e-08,1.5762332061797223e-08,1.5546139842115279e-08,1.579444681709674e-08,1.5721253454614726e-08,1.5394360985965251e-08,1.4487613420044454e-08,1.4254587510365013e-08,1.3190029513054924e-08],"type":"scatter","mode":"lines","name":"smoothing 2 frequency","marker":{"color":"rgba(44,160,44,1)","line":{"color":"rgba(44,160,44,1)"}},"error_y":{"color":"rgba(44,160,44,1)"},"error_x":{"color":"rgba(44,160,44,1)"},"line":{"color":"rgba(44,160,44,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>phrase2.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase2<span class="sc">$</span>Frequency)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">data=</span>phrase2, <span class="at">x=</span><span class="sc">~</span>Year) <span class="sc">%&gt;%</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span><span class="sc">~</span>Frequency, <span class="at">name=</span><span class="st">'raw frequency'</span>,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">type=</span><span class="st">'scatter'</span>, <span class="at">mode=</span><span class="st">'lines+markers'</span>,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkolivegreen3'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.smoothed, </span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothed with DLM'</span>, </span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'steelblue2'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.smooth1<span class="sc">$</span>Frequency, </span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 1 with MA'</span>,</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'darkorchid'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.smooth2<span class="sc">$</span>Frequency,</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'smoothing 2 with MA'</span>,</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">"darkorange1"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">title=</span><span class="st">"Smoothing curves of 'come rain or shine'"</span>,</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">yaxis=</span><span class="fu">list</span>(<span class="at">showexponent=</span><span class="st">'all'</span>,</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>                      <span class="at">exponentformat=</span><span class="st">'e'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-183303b8350f5c422fa6" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-183303b8350f5c422fa6">{"x":{"visdat":{"311c256d76d4":["function () ","plotlyVisDat"]},"cur_data":"311c256d76d4","attrs":{"311c256d76d4":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"raw frequency","type":"scatter","mode":"lines+markers","color":["darkolivegreen3"],"inherit":true},"311c256d76d4.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[2.0320924791168896e-09,2.6183405784588727e-09,3.0672654205884742e-09,3.6336049614881477e-09,3.9638487265826398e-09,4.4075740624667951e-09,4.7845715128655787e-09,4.8827040708266167e-09,4.1306139690446723e-09,3.5284236675092745e-09,3.3609596855533033e-09,3.5456802924225357e-09,4.0430838205506179e-09,4.3360414548210103e-09,4.5742352560417601e-09,4.941101022560372e-09,5.4045309265291799e-09,5.8696822730209107e-09,6.2987228818997149e-09,6.2960359050127547e-09,6.4605955650794778e-09,6.8530869036511221e-09,7.561153446727393e-09,8.1653839608790114e-09,8.8412611589646452e-09,9.5194555469915618e-09,9.9182314358903667e-09,1.0438220087490693e-08,1.1438220581714789e-08,1.3097005316826327e-08,1.4915180290365769e-08,1.5623643588126451e-08,1.5538791162707876e-08,1.5560102005971067e-08,1.5953084436006002e-08,1.6119894360020519e-08,1.601228868961691e-08,1.4881847035139168e-08,1.3416121819609656e-08,1.195967210743831e-08],"type":"scatter","mode":"lines","name":"smoothed with DLM","color":["steelblue2"],"inherit":true},"311c256d76d4.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[2.4525855790713535e-09,2.4547293827244707e-09,3.2687038261277244e-09,3.4099238988005709e-09,4.0488004060534877e-09,4.0783530626716429e-09,5.0850605208078532e-09,4.7649510263407064e-09,4.343519247977194e-09,3.3267910648504539e-09,3.2110361036785662e-09,3.7273158633629082e-09,4.0492476779026747e-09,4.4794605062274213e-09,4.5356176592292741e-09,4.8995330755493187e-09,5.2839350672684304e-09,6.088917666365508e-09,6.1876527605401561e-09,6.5128715753814959e-09,6.1971109725315427e-09,6.9965445289218069e-09,7.4742170970883616e-09,8.2351580369769782e-09,8.9170830719353944e-09,9.5690255719205197e-09,1.0112138385901895e-08,1.0298215613602224e-08,1.1115181663967633e-08,1.3196009914414239e-08,1.5011567396546372e-08,1.5870741757832246e-08,1.526943223713791e-08,1.5368085174808737e-08,1.5539717364750533e-08,1.6456888000485986e-08,1.5802277412528081e-08,1.5016467476887858e-08,1.3190029513054924e-08,1.2515617431319015e-08],"type":"scatter","mode":"lines","name":"smoothing 1 with MA","color":["darkorchid"],"inherit":true},"311c256d76d4.3":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[2.4547293827244707e-09,2.9252202327079146e-09,3.0269885709088839e-09,3.5231639827770778e-09,3.8061537921407764e-09,4.6051872537589137e-09,4.4209123029048669e-09,4.3663110016467502e-09,4.1719816490370931e-09,3.9005221275090207e-09,3.5516642071797832e-09,3.7425596399742743e-09,3.9820868824591571e-09,4.2769601638070752e-09,4.7556578230967263e-09,4.9160584048024704e-09,5.500762156884775e-09,5.7805731756843669e-09,6.1024107544938035e-09,6.2793088950741092e-09,6.8081388526763934e-09,6.9335904129275148e-09,7.5078120609362035e-09,8.2506657506087329e-09,8.956739172560902e-09,9.3771683751242563e-09,9.9450648605170496e-09,1.0684753348755294e-08,1.1944524480611562e-08,1.3210589955292562e-08,1.4139915371913503e-08,1.4927254454732973e-08,1.5762332061797223e-08,1.5546139842115279e-08,1.579444681709674e-08,1.5721253454614726e-08,1.5394360985965251e-08,1.4487613420044454e-08,1.4254587510365013e-08,1.3190029513054924e-08],"type":"scatter","mode":"lines","name":"smoothing 2 with MA","color":["darkorange1"],"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Smoothing curves of 'come rain or shine'","yaxis":{"domain":[0,1],"automargin":true,"showexponent":"all","exponentformat":"e","title":"Frequency"},"xaxis":{"domain":[0,1],"automargin":true,"title":"Year"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[1.8947694524484859e-09,3.0104017056942212e-09,2.4590169900307046e-09,4.3366927826582469e-09,3.4340619237127612e-09,4.375646511789455e-09,4.4253507525127134e-09,6.4541842981213904e-09,3.4153180283880147e-09,3.1610554174221761e-09,3.4039997487411711e-09,3.0680531448723514e-09,4.7098946964752031e-09,4.3697951923604705e-09,4.3586916298465894e-09,4.8783661554807622e-09,5.4615414413206054e-09,5.5118976050039237e-09,7.2933139527719959e-09,5.7577467238445479e-09,6.4875540495279438e-09,6.3460321442221357e-09,8.1560473930153421e-09,7.9205717540276055e-09,8.6288549638879886e-09,1.0201822497890589e-08,9.8763992539829815e-09,1.0258193405832117e-08,1.0760054180991574e-08,1.2327297405079207e-08,1.6500678157171933e-08,1.620672662738798e-08,1.4904820488936821e-08,1.4696749595088932e-08,1.6502685440400455e-08,1.5419717058762217e-08,1.7448261502295281e-08,1.4538853676526742e-08,1.3062287251841553e-08,1.1968947610796477e-08],"name":"raw frequency","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(162,205,90,1)","line":{"color":"rgba(162,205,90,1)"}},"textfont":{"color":"rgba(162,205,90,1)"},"error_y":{"color":"rgba(162,205,90,1)"},"error_x":{"color":"rgba(162,205,90,1)"},"line":{"color":"rgba(162,205,90,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[2.0320924791168896e-09,2.6183405784588727e-09,3.0672654205884742e-09,3.6336049614881477e-09,3.9638487265826398e-09,4.4075740624667951e-09,4.7845715128655787e-09,4.8827040708266167e-09,4.1306139690446723e-09,3.5284236675092745e-09,3.3609596855533033e-09,3.5456802924225357e-09,4.0430838205506179e-09,4.3360414548210103e-09,4.5742352560417601e-09,4.941101022560372e-09,5.4045309265291799e-09,5.8696822730209107e-09,6.2987228818997149e-09,6.2960359050127547e-09,6.4605955650794778e-09,6.8530869036511221e-09,7.561153446727393e-09,8.1653839608790114e-09,8.8412611589646452e-09,9.5194555469915618e-09,9.9182314358903667e-09,1.0438220087490693e-08,1.1438220581714789e-08,1.3097005316826327e-08,1.4915180290365769e-08,1.5623643588126451e-08,1.5538791162707876e-08,1.5560102005971067e-08,1.5953084436006002e-08,1.6119894360020519e-08,1.601228868961691e-08,1.4881847035139168e-08,1.3416121819609656e-08,1.195967210743831e-08],"type":"scatter","mode":"lines","name":"smoothed with DLM","marker":{"color":"rgba(92,172,238,1)","line":{"color":"rgba(92,172,238,1)"}},"textfont":{"color":"rgba(92,172,238,1)"},"error_y":{"color":"rgba(92,172,238,1)"},"error_x":{"color":"rgba(92,172,238,1)"},"line":{"color":"rgba(92,172,238,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[2.4525855790713535e-09,2.4547293827244707e-09,3.2687038261277244e-09,3.4099238988005709e-09,4.0488004060534877e-09,4.0783530626716429e-09,5.0850605208078532e-09,4.7649510263407064e-09,4.343519247977194e-09,3.3267910648504539e-09,3.2110361036785662e-09,3.7273158633629082e-09,4.0492476779026747e-09,4.4794605062274213e-09,4.5356176592292741e-09,4.8995330755493187e-09,5.2839350672684304e-09,6.088917666365508e-09,6.1876527605401561e-09,6.5128715753814959e-09,6.1971109725315427e-09,6.9965445289218069e-09,7.4742170970883616e-09,8.2351580369769782e-09,8.9170830719353944e-09,9.5690255719205197e-09,1.0112138385901895e-08,1.0298215613602224e-08,1.1115181663967633e-08,1.3196009914414239e-08,1.5011567396546372e-08,1.5870741757832246e-08,1.526943223713791e-08,1.5368085174808737e-08,1.5539717364750533e-08,1.6456888000485986e-08,1.5802277412528081e-08,1.5016467476887858e-08,1.3190029513054924e-08,1.2515617431319015e-08],"type":"scatter","mode":"lines","name":"smoothing 1 with MA","marker":{"color":"rgba(153,50,204,1)","line":{"color":"rgba(153,50,204,1)"}},"textfont":{"color":"rgba(153,50,204,1)"},"error_y":{"color":"rgba(153,50,204,1)"},"error_x":{"color":"rgba(153,50,204,1)"},"line":{"color":"rgba(153,50,204,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[2.4547293827244707e-09,2.9252202327079146e-09,3.0269885709088839e-09,3.5231639827770778e-09,3.8061537921407764e-09,4.6051872537589137e-09,4.4209123029048669e-09,4.3663110016467502e-09,4.1719816490370931e-09,3.9005221275090207e-09,3.5516642071797832e-09,3.7425596399742743e-09,3.9820868824591571e-09,4.2769601638070752e-09,4.7556578230967263e-09,4.9160584048024704e-09,5.500762156884775e-09,5.7805731756843669e-09,6.1024107544938035e-09,6.2793088950741092e-09,6.8081388526763934e-09,6.9335904129275148e-09,7.5078120609362035e-09,8.2506657506087329e-09,8.956739172560902e-09,9.3771683751242563e-09,9.9450648605170496e-09,1.0684753348755294e-08,1.1944524480611562e-08,1.3210589955292562e-08,1.4139915371913503e-08,1.4927254454732973e-08,1.5762332061797223e-08,1.5546139842115279e-08,1.579444681709674e-08,1.5721253454614726e-08,1.5394360985965251e-08,1.4487613420044454e-08,1.4254587510365013e-08,1.3190029513054924e-08],"type":"scatter","mode":"lines","name":"smoothing 2 with MA","marker":{"color":"rgba(255,127,0,1)","line":{"color":"rgba(255,127,0,1)"}},"textfont":{"color":"rgba(255,127,0,1)"},"error_y":{"color":"rgba(255,127,0,1)"},"error_x":{"color":"rgba(255,127,0,1)"},"line":{"color":"rgba(255,127,0,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>phrase2.us <span class="ot">&lt;-</span> <span class="fu">ngram</span>(<span class="st">'come rain or shine'</span>,</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">corpus=</span><span class="st">'en-US-2019'</span>, <span class="at">year_start=</span><span class="dv">1980</span>,</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>phrase2.gb <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE2, <span class="at">corpus=</span><span class="st">'en-GB-2019'</span>, </span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">year_start=</span><span class="dv">1980</span>, <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>phrase2.fic <span class="ot">&lt;-</span> <span class="fu">ngram</span>(PHRASE2, <span class="at">corpus=</span><span class="st">'en-fiction-2019'</span>, </span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">year_start=</span><span class="dv">1980</span>, <span class="at">smoothing=</span><span class="dv">0</span>)</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>phrase2.us.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase2.us<span class="sc">$</span>Frequency)</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>phrase2.gb.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase2.gb<span class="sc">$</span>Frequency)</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>phrase2.fic.smoothed <span class="ot">&lt;-</span> <span class="fu">smoothed</span>(phrase2.fic<span class="sc">$</span>Frequency)</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_ly</span>(<span class="at">data=</span>phrase2.us, <span class="at">x=</span><span class="sc">~</span>Year) <span class="sc">%&gt;%</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span><span class="sc">~</span>Frequency, </span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'American english'</span>,</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'lightsteelblue3'</span>), <span class="at">type=</span><span class="st">'scatter'</span>, </span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>              <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.us.smoothed, </span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'American english (smoothed)'</span>, </span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'steelblue4'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span>phrase2.gb<span class="sc">$</span>Frequency, </span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'British english'</span>,</span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'violet'</span>), <span class="at">type=</span><span class="st">'scatter'</span>,</span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>              <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.gb.smoothed,</span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'British english (smoothed)'</span>,</span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'violetred'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_trace</span>(<span class="at">y=</span>phrase2.fic<span class="sc">$</span>Frequency, </span>
+<span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'fiction books'</span>, </span>
+<span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'orange'</span>), <span class="at">type=</span><span class="st">'scatter'</span>,</span>
+<span id="cb30-31"><a href="#cb30-31" aria-hidden="true" tabindex="-1"></a>              <span class="at">mode=</span><span class="st">'lines+markers'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-32"><a href="#cb30-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_lines</span>(<span class="at">y=</span>phrase2.fic.smoothed,</span>
+<span id="cb30-33"><a href="#cb30-33" aria-hidden="true" tabindex="-1"></a>              <span class="at">name=</span><span class="st">'fiction books (smoothed)'</span>,</span>
+<span id="cb30-34"><a href="#cb30-34" aria-hidden="true" tabindex="-1"></a>              <span class="at">color=</span><span class="fu">I</span>(<span class="st">'orangered'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb30-35"><a href="#cb30-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">layout</span>(<span class="at">title=</span><span class="st">"Usage of 'come rain or shine', categorized by corpus"</span>,</span>
+<span id="cb30-36"><a href="#cb30-36" aria-hidden="true" tabindex="-1"></a>           <span class="at">yaxis=</span><span class="fu">list</span>(<span class="at">showexponent=</span><span class="st">'all'</span>,</span>
+<span id="cb30-37"><a href="#cb30-37" aria-hidden="true" tabindex="-1"></a>                      <span class="at">exponentformat=</span><span class="st">'e'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-ee5f9a1ec69e26d2f76a" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-ee5f9a1ec69e26d2f76a">{"x":{"visdat":{"311c16ad31a6":["function () ","plotlyVisDat"]},"cur_data":"311c16ad31a6","attrs":{"311c16ad31a6":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"American english","color":["lightsteelblue3"],"type":"scatter","mode":"lines+markers","inherit":true},"311c16ad31a6.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[1.1334033556575867e-09,1.8281990500281128e-09,2.4510892600864297e-09,3.1630958065546948e-09,3.5486227170025405e-09,3.7645736010213851e-09,4.0009327295304113e-09,4.1648470050852124e-09,3.4993267734147406e-09,2.7898104721294004e-09,2.603169651406725e-09,2.7234470812436395e-09,2.9303030656786033e-09,3.1902652613968839e-09,3.4240573434378011e-09,3.4320140785671809e-09,3.5405748654098986e-09,3.8914785532102593e-09,4.4570127282940393e-09,4.7564661469491034e-09,4.9207154874735087e-09,5.4117083395176592e-09,6.4379775733493025e-09,7.2099958333732743e-09,7.5232572618274162e-09,7.9406202734026902e-09,7.8962491222156063e-09,7.6078966998285581e-09,7.8900775147184479e-09,9.0146963976346944e-09,1.0383400057048054e-08,1.1424893704146454e-08,1.2185369805276706e-08,1.2272326628319538e-08,1.1958022484963588e-08,1.1638901319725975e-08,1.200539377713672e-08,1.1469314173544042e-08,1.1106259144208779e-08,1.1223724399712591e-08],"type":"scatter","mode":"lines","name":"American english (smoothed)","color":["steelblue4"],"inherit":true},"311c16ad31a6.2":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[7.1684400637650469e-09,1.014788431064062e-08,1.1277501599238349e-08,9.8619885591233469e-09,7.2928854066844906e-09,1.0463726773934923e-08,1.282413641945368e-08,1.7313217526293556e-08,7.0913888094992217e-09,7.3811956546876445e-09,3.6710881001766893e-09,5.5821702815705976e-09,8.1488256142847604e-09,1.3836061185656945e-08,7.1413701618894265e-09,6.2960627822405968e-09,1.594113641090189e-08,1.2646919955727753e-08,1.5187319846177161e-08,7.0076713321043371e-09,1.2380106717557737e-08,1.7293089626946312e-08,1.5576432588204625e-08,9.254653043910821e-09,1.7613409397654323e-08,1.8878486329754196e-08,1.9227451630854375e-08,2.4595255609938249e-08,2.2484536899014529e-08,2.4458293168549972e-08,4.0516436428106317e-08,2.7713340955415333e-08,2.6907615691129649e-08,2.9228182540919079e-08,2.3676301807995515e-08,2.8199512058790788e-08,2.8653364125830194e-08,3.456234765053523e-08,3.1533854638610137e-08,3.8924554246477783e-08],"name":"British english","color":["violet"],"type":"scatter","mode":"lines+markers","inherit":true},"311c16ad31a6.3":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[7.9852103042486867e-09,9.431252052053774e-09,1.0060522396146205e-08,9.7728827007120204e-09,9.6851735330297696e-09,1.1003341318789325e-08,1.254104435733528e-08,1.2572326403157835e-08,9.6543232728655862e-09,7.0850619062028365e-09,5.5996347795475448e-09,6.2292681177624688e-09,8.0766414663395062e-09,9.5973365345786952e-09,9.3191191797253223e-09,1.0008479910102924e-08,1.2254160216199156e-08,1.2932484460639337e-08,1.2606753200751508e-08,1.1554702488952132e-08,1.2634635023083333e-08,1.4157822344139446e-08,1.4181007687589211e-08,1.3896201571708228e-08,1.5890839415387526e-08,1.8110808109720721e-08,2.0224564528068233e-08,2.2668243763823951e-08,2.4880868013167905e-08,2.8228471318394435e-08,3.1680756607644502e-08,3.0437248659214591e-08,2.8533152071863027e-08,2.7279763740548863e-08,2.6362844179497785e-08,2.7416572703305686e-08,2.9388586255066204e-08,3.2009461133358062e-08,3.4274551507523977e-08,3.7732098064083834e-08],"type":"scatter","mode":"lines","name":"British english (smoothed)","color":["violetred"],"inherit":true},"311c16ad31a6.4":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[9.8626697919712569e-09,1.8252656053263649e-09,8.724970967932677e-09,1.8217011898968849e-08,3.140870896700676e-09,2.0476653261880529e-08,6.6624878947152411e-09,1.2360273693445833e-08,4.8162367427551089e-09,8.9549292425772364e-09,1.0147163109763824e-08,1.801498328291018e-08,2.2546945643853178e-08,2.2660929133166974e-08,1.5140944498170938e-08,1.3401348475383656e-08,1.1733241045419618e-08,2.0120063837225644e-08,2.5138669812463377e-08,2.5927505475920043e-08,1.7163324983471284e-08,1.8147359170939126e-08,2.7653618062117857e-08,2.1172542830072416e-08,1.9367492498645333e-08,2.2405497901445415e-08,2.8593156287115562e-08,2.1760630630751621e-08,2.0941287814935095e-08,2.1323034005149566e-08,3.4333243803530422e-08,2.7164064775320185e-08,2.7209479114276292e-08,2.8133092300208773e-08,2.8410788388555375e-08,2.2425767909339811e-08,2.8120952677568312e-08,1.9401142026254092e-08,2.078734517851899e-08,1.6542918146456032e-08],"name":"fiction books","color":["orange"],"type":"scatter","mode":"lines+markers","inherit":true},"311c16ad31a6.5":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[7.2429534131593557e-09,6.8597568228412395e-09,9.0962750477844348e-09,1.1537732486672227e-08,1.1398049458334969e-08,1.2570425693899628e-08,1.0690882362858881e-08,9.3016682026862984e-09,7.9166374827118351e-09,9.1082499630249636e-09,1.2348564663758437e-08,1.6956319884597282e-08,2.0048852371231901e-08,1.9802162267665604e-08,1.6890342990522976e-08,1.484625482192997e-08,1.5453359551660513e-08,1.9050212622942202e-08,2.225525097276175e-08,2.2756762752389311e-08,2.112645495279667e-08,2.1106777288486349e-08,2.2477049504635465e-08,2.2057173228873933e-08,2.1843618646314062e-08,2.2948225543266624e-08,2.4006707558373678e-08,2.3112050688456063e-08,2.2943689659076505e-08,2.4829639138093289e-08,2.8095511949223285e-08,2.8560315783239647e-08,2.8280790185222659e-08,2.791742369233315e-08,2.7059393770785576e-08,2.5511546494670009e-08,2.4430122555846327e-08,2.1885584060844211e-08,1.9639223237915332e-08,1.6967890280721242e-08],"type":"scatter","mode":"lines","name":"fiction books (smoothed)","color":["orangered"],"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Usage of 'come rain or shine', categorized by corpus","yaxis":{"domain":[0,1],"automargin":true,"showexponent":"all","exponentformat":"e","title":"Frequency"},"xaxis":{"domain":[0,1],"automargin":true,"title":"Year"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[1.0614978895873151e-09,2.061126380681344e-09,1.8744714669338691e-09,3.7355953885764848e-09,3.5817033783303032e-09,3.481736232657795e-09,3.3367961727037709e-09,5.7072750969666686e-09,3.2807598859818654e-09,2.0069816919487948e-09,2.5987871854482592e-09,2.9103144338904485e-09,2.8844990840326545e-09,3.0698763531233908e-09,3.9501619752968509e-09,3.2473135291866129e-09,3.371123602491366e-09,3.4384797231723496e-09,5.0686006503042336e-09,5.0875370583014501e-09,4.667300768090854e-09,4.4136481136547445e-09,7.022999071182312e-09,7.9773601058263921e-09,6.3945631012529702e-09,8.7242089108485743e-09,8.4930107391301135e-09,7.0652870221010744e-09,7.0198193924397856e-09,9.0417549003518616e-09,1.1000887312206942e-08,1.0986199505680361e-08,1.2850129849084624e-08,1.2396512261148018e-08,1.2252009184976487e-08,9.3602849915441766e-09,1.4669176096049341e-08,1.070121324886486e-08,1.0318243148788042e-08,1.1704244684551668e-08],"name":"American english","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(162,181,205,1)","line":{"color":"rgba(162,181,205,1)"}},"textfont":{"color":"rgba(162,181,205,1)"},"error_y":{"color":"rgba(162,181,205,1)"},"error_x":{"color":"rgba(162,181,205,1)"},"line":{"color":"rgba(162,181,205,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[1.1334033556575867e-09,1.8281990500281128e-09,2.4510892600864297e-09,3.1630958065546948e-09,3.5486227170025405e-09,3.7645736010213851e-09,4.0009327295304113e-09,4.1648470050852124e-09,3.4993267734147406e-09,2.7898104721294004e-09,2.603169651406725e-09,2.7234470812436395e-09,2.9303030656786033e-09,3.1902652613968839e-09,3.4240573434378011e-09,3.4320140785671809e-09,3.5405748654098986e-09,3.8914785532102593e-09,4.4570127282940393e-09,4.7564661469491034e-09,4.9207154874735087e-09,5.4117083395176592e-09,6.4379775733493025e-09,7.2099958333732743e-09,7.5232572618274162e-09,7.9406202734026902e-09,7.8962491222156063e-09,7.6078966998285581e-09,7.8900775147184479e-09,9.0146963976346944e-09,1.0383400057048054e-08,1.1424893704146454e-08,1.2185369805276706e-08,1.2272326628319538e-08,1.1958022484963588e-08,1.1638901319725975e-08,1.200539377713672e-08,1.1469314173544042e-08,1.1106259144208779e-08,1.1223724399712591e-08],"type":"scatter","mode":"lines","name":"American english (smoothed)","marker":{"color":"rgba(54,100,139,1)","line":{"color":"rgba(54,100,139,1)"}},"textfont":{"color":"rgba(54,100,139,1)"},"error_y":{"color":"rgba(54,100,139,1)"},"error_x":{"color":"rgba(54,100,139,1)"},"line":{"color":"rgba(54,100,139,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[7.1684400637650469e-09,1.014788431064062e-08,1.1277501599238349e-08,9.8619885591233469e-09,7.2928854066844906e-09,1.0463726773934923e-08,1.282413641945368e-08,1.7313217526293556e-08,7.0913888094992217e-09,7.3811956546876445e-09,3.6710881001766893e-09,5.5821702815705976e-09,8.1488256142847604e-09,1.3836061185656945e-08,7.1413701618894265e-09,6.2960627822405968e-09,1.594113641090189e-08,1.2646919955727753e-08,1.5187319846177161e-08,7.0076713321043371e-09,1.2380106717557737e-08,1.7293089626946312e-08,1.5576432588204625e-08,9.254653043910821e-09,1.7613409397654323e-08,1.8878486329754196e-08,1.9227451630854375e-08,2.4595255609938249e-08,2.2484536899014529e-08,2.4458293168549972e-08,4.0516436428106317e-08,2.7713340955415333e-08,2.6907615691129649e-08,2.9228182540919079e-08,2.3676301807995515e-08,2.8199512058790788e-08,2.8653364125830194e-08,3.456234765053523e-08,3.1533854638610137e-08,3.8924554246477783e-08],"name":"British english","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(238,130,238,1)","line":{"color":"rgba(238,130,238,1)"}},"textfont":{"color":"rgba(238,130,238,1)"},"error_y":{"color":"rgba(238,130,238,1)"},"error_x":{"color":"rgba(238,130,238,1)"},"line":{"color":"rgba(238,130,238,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[7.9852103042486867e-09,9.431252052053774e-09,1.0060522396146205e-08,9.7728827007120204e-09,9.6851735330297696e-09,1.1003341318789325e-08,1.254104435733528e-08,1.2572326403157835e-08,9.6543232728655862e-09,7.0850619062028365e-09,5.5996347795475448e-09,6.2292681177624688e-09,8.0766414663395062e-09,9.5973365345786952e-09,9.3191191797253223e-09,1.0008479910102924e-08,1.2254160216199156e-08,1.2932484460639337e-08,1.2606753200751508e-08,1.1554702488952132e-08,1.2634635023083333e-08,1.4157822344139446e-08,1.4181007687589211e-08,1.3896201571708228e-08,1.5890839415387526e-08,1.8110808109720721e-08,2.0224564528068233e-08,2.2668243763823951e-08,2.4880868013167905e-08,2.8228471318394435e-08,3.1680756607644502e-08,3.0437248659214591e-08,2.8533152071863027e-08,2.7279763740548863e-08,2.6362844179497785e-08,2.7416572703305686e-08,2.9388586255066204e-08,3.2009461133358062e-08,3.4274551507523977e-08,3.7732098064083834e-08],"type":"scatter","mode":"lines","name":"British english (smoothed)","marker":{"color":"rgba(208,32,144,1)","line":{"color":"rgba(208,32,144,1)"}},"textfont":{"color":"rgba(208,32,144,1)"},"error_y":{"color":"rgba(208,32,144,1)"},"error_x":{"color":"rgba(208,32,144,1)"},"line":{"color":"rgba(208,32,144,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[9.8626697919712569e-09,1.8252656053263649e-09,8.724970967932677e-09,1.8217011898968849e-08,3.140870896700676e-09,2.0476653261880529e-08,6.6624878947152411e-09,1.2360273693445833e-08,4.8162367427551089e-09,8.9549292425772364e-09,1.0147163109763824e-08,1.801498328291018e-08,2.2546945643853178e-08,2.2660929133166974e-08,1.5140944498170938e-08,1.3401348475383656e-08,1.1733241045419618e-08,2.0120063837225644e-08,2.5138669812463377e-08,2.5927505475920043e-08,1.7163324983471284e-08,1.8147359170939126e-08,2.7653618062117857e-08,2.1172542830072416e-08,1.9367492498645333e-08,2.2405497901445415e-08,2.8593156287115562e-08,2.1760630630751621e-08,2.0941287814935095e-08,2.1323034005149566e-08,3.4333243803530422e-08,2.7164064775320185e-08,2.7209479114276292e-08,2.8133092300208773e-08,2.8410788388555375e-08,2.2425767909339811e-08,2.8120952677568312e-08,1.9401142026254092e-08,2.078734517851899e-08,1.6542918146456032e-08],"name":"fiction books","type":"scatter","mode":"lines+markers","marker":{"color":"rgba(255,165,0,1)","line":{"color":"rgba(255,165,0,1)"}},"textfont":{"color":"rgba(255,165,0,1)"},"error_y":{"color":"rgba(255,165,0,1)"},"error_x":{"color":"rgba(255,165,0,1)"},"line":{"color":"rgba(255,165,0,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],"y":[7.2429534131593557e-09,6.8597568228412395e-09,9.0962750477844348e-09,1.1537732486672227e-08,1.1398049458334969e-08,1.2570425693899628e-08,1.0690882362858881e-08,9.3016682026862984e-09,7.9166374827118351e-09,9.1082499630249636e-09,1.2348564663758437e-08,1.6956319884597282e-08,2.0048852371231901e-08,1.9802162267665604e-08,1.6890342990522976e-08,1.484625482192997e-08,1.5453359551660513e-08,1.9050212622942202e-08,2.225525097276175e-08,2.2756762752389311e-08,2.112645495279667e-08,2.1106777288486349e-08,2.2477049504635465e-08,2.2057173228873933e-08,2.1843618646314062e-08,2.2948225543266624e-08,2.4006707558373678e-08,2.3112050688456063e-08,2.2943689659076505e-08,2.4829639138093289e-08,2.8095511949223285e-08,2.8560315783239647e-08,2.8280790185222659e-08,2.791742369233315e-08,2.7059393770785576e-08,2.5511546494670009e-08,2.4430122555846327e-08,2.1885584060844211e-08,1.9639223237915332e-08,1.6967890280721242e-08],"type":"scatter","mode":"lines","name":"fiction books (smoothed)","marker":{"color":"rgba(255,69,0,1)","line":{"color":"rgba(255,69,0,1)"}},"textfont":{"color":"rgba(255,69,0,1)"},"error_y":{"color":"rgba(255,69,0,1)"},"error_x":{"color":"rgba(255,69,0,1)"},"line":{"color":"rgba(255,69,0,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
