@@ -1,0 +1,245 @@
+# Ngram viewer
+
+## Load libraries
+
+-   `ngramr` : for getting the data
+-   `dlm` : for applying Normal Dynamic Linear Model
+
+```{r load libraries}
+library(ngramr)
+library(dlm)
+library(dplyr)
+library(plotly)
+```
+
+```{r custom function}
+# make a function to build DLM model, filter, and smooth
+smoothed <- function(ts){
+    mod <- dlmModPoly()
+    mod.filter <- dlmFilter(ts, mod)
+    mod.smooth <- dlmSmooth(mod.filter)
+    mod.smooth$s[-1,1]
+}
+```
+
+# Do natives still say *raining cats and dogs*?
+
+## Data
+
+```{r}
+PHRASE1 <- 'raining cats and dogs'
+```
+
+```{r}
+phrase1 <- ngram(PHRASE1, year_start=1980, smoothing=0)
+phrase1
+```
+
+```{r}
+ggplot(data=phrase1, aes(x=Year)) +
+    geom_line(aes(y=Frequency), col='darkolivegreen3', 
+              lwd=1.5) + theme_google() + 
+    labs(x='Year', y='Frequency', 
+         title="Usage of 'raining cats and dogs'")
+```
+
+```{r}
+phrase1.smooth1 <- ngram(PHRASE1, year_start=1980,
+                         smoothing=1)
+phrase1.smooth2 <- ngram(PHRASE1, year_start=1980, 
+                         smoothing=2)
+```
+
+```{r phrase1_EDA}
+plot_ly(data=phrase1, x=~Year) %>%
+    add_trace(y=~Frequency, name='raw frequency',
+              color=I('darkolivegreen3'),
+              type='scatter', mode='lines+markers') %>%
+    add_lines(y=phrase1.smooth1$Frequency, 
+              name='smoothing 1 frequency') %>%
+    add_lines(y=phrase1.smooth2$Frequency,
+              name='smoothing 2 frequency') %>%
+    layout(title="Smoothing 'raining cats and dogs' with MA",
+           yaxis=list(showexponent='all',
+                      exponentformat='e'))
+```
+
+## Smoothing
+
+### Compare filtering and smoothing
+
+```{r}
+mod <- dlmModPoly()
+mod.filter <- dlmFilter(phrase1$Frequency, mod)
+mod.smooth <- dlmSmooth(mod.filter)
+
+plot_ly(data=phrase1, x=~Year) %>%
+    add_trace(y=~Frequency, name='raw frequency',
+              type='scatter', mode='lines+markers',
+              color=I('darkolivegreen3')) %>%
+    add_lines(y=mod.filter$m[-1,1], name='filtering',
+              color=I('darkolivegreen')) %>%
+    add_lines(y=mod.smooth$s[-1,1], name='smoothing',
+              color=I('violetred')) %>%
+    layout(title='raining cats and dogs',
+           yaxis=list(showexponent='all',
+                      exponentformat='e'))
+```
+
+### Back to the topic
+
+```{r get_the_smoothed_series}
+phrase1.smoothed <- smoothed(phrase1$Frequency)
+```
+
+```{r plot_result}
+plot_ly(data=phrase1, x=~Year) %>%
+    add_trace(y=~Frequency, name='raw frequency',
+              type='scatter', mode='lines+markers',
+              color=I('darkolivegreen3')) %>%
+    add_lines(y=phrase1.smoothed, 
+              name='smoothed with dlm', 
+              color=I('steelblue2')) %>%
+    add_lines(y=phrase1.smooth1$Frequency, 
+              name='smoothing 1 with MA',
+              color=I('darkorchid')) %>%
+    add_lines(y=phrase1.smooth2$Frequency,
+              name='smoothing 2 with MA',
+              color=I("darkorange1")) %>%
+    layout(title="Smoothing curves of 'raining cats and dogs'",
+           yaxis=list(showexponent='all',
+                      exponentformat='e'))
+```
+
+## Different corpus, different results
+
+```{r}
+phrase1.us <- ngram('raining cats and dogs',
+                    corpus='en-US-2019', year_start=1980,
+                    smoothing=0)
+phrase1.gb <- ngram(PHRASE1, corpus='en-GB-2019', 
+                   year_start=1980, smoothing=0)
+phrase1.fic <- ngram(PHRASE1, corpus='en-fiction-2019', 
+                     year_start=1980, smoothing=0)
+
+phrase1.us.smoothed <- smoothed(phrase1.us$Frequency)
+phrase1.gb.smoothed <- smoothed(phrase1.gb$Frequency)
+phrase1.fic.smoothed <- smoothed(phrase1.fic$Frequency)
+
+plot_ly(data=phrase1.us, x=~Year) %>%
+    add_trace(y=~Frequency, 
+              name='American english',
+              color=I('lightsteelblue3'), type='scatter', 
+              mode='lines+markers') %>%
+    add_lines(y=phrase1.us.smoothed, 
+              name='American english (smoothed)', 
+              color=I('steelblue4')) %>%
+    add_trace(y=phrase1.gb$Frequency, 
+              name='British english',
+              color=I('violet'), type='scatter',
+              mode='lines+markers') %>%
+    add_lines(y=phrase1.gb.smoothed,
+              name='British english (smoothed)',
+              color=I('violetred')) %>%
+    add_trace(y=phrase1.fic$Frequency, 
+              name='fiction books', 
+              color=I('orange'), type='scatter',
+              mode='lines+markers') %>%
+    add_lines(y=phrase1.fic.smoothed,
+              name='fiction books (smoothed)',
+              color=I('orangered')) %>%
+    layout(title="Usage of 'raining cats and dogs', categorized by corpus",
+           yaxis=list(showexponent='all',
+                      exponentformat='e'))
+```
+
+# Do we still say *come rain or shine*?
+
+```{r}
+PHRASE2 <- 'come rain or shine'
+```
+
+```{r}
+phrase2 <- ngram(PHRASE2, year_start=1980, smoothing=0)
+phrase2.smooth1 <- ngram(PHRASE2, year_start=1980,
+                         smoothing=1)
+phrase2.smooth2 <- ngram(PHRASE2, year_start=1980, 
+                         smoothing=2)
+```
+
+```{r}
+plot_ly(data=phrase2, x=~Year) %>%
+    add_trace(y=~Frequency, name='raw frequency',
+              color=I('darkolivegreen3'),
+              type='scatter', mode='lines+markers') %>%
+    add_lines(y=phrase2.smooth1$Frequency, 
+              name='smoothing 1 frequency') %>%
+    add_lines(y=phrase2.smooth2$Frequency,
+              name='smoothing 2 frequency') %>%
+    layout(title="Smoothing 'come rain or shine' using MA",
+           yaxis=list(showexponent='all',
+                      exponentformat='e'))
+```
+
+```{r}
+phrase2.smoothed <- smoothed(phrase2$Frequency)
+```
+
+```{r}
+plot_ly(data=phrase2, x=~Year) %>%
+    add_trace(y=~Frequency, name='raw frequency',
+              type='scatter', mode='lines+markers',
+              color=I('darkolivegreen3')) %>%
+    add_lines(y=phrase2.smoothed, 
+              name='smoothed with DLM', 
+              color=I('steelblue2')) %>%
+    add_lines(y=phrase2.smooth1$Frequency, 
+              name='smoothing 1 with MA',
+              color=I('darkorchid')) %>%
+    add_lines(y=phrase2.smooth2$Frequency,
+              name='smoothing 2 with MA',
+              color=I("darkorange1")) %>%
+    layout(title="Smoothing curves of 'come rain or shine'",
+           yaxis=list(showexponent='all',
+                      exponentformat='e'))
+```
+
+```{r}
+phrase2.us <- ngram('come rain or shine',
+                    corpus='en-US-2019', year_start=1980,
+                    smoothing=0)
+phrase2.gb <- ngram(PHRASE2, corpus='en-GB-2019', 
+                   year_start=1980, smoothing=0)
+phrase2.fic <- ngram(PHRASE2, corpus='en-fiction-2019', 
+                     year_start=1980, smoothing=0)
+
+phrase2.us.smoothed <- smoothed(phrase2.us$Frequency)
+phrase2.gb.smoothed <- smoothed(phrase2.gb$Frequency)
+phrase2.fic.smoothed <- smoothed(phrase2.fic$Frequency)
+
+plot_ly(data=phrase2.us, x=~Year) %>%
+    add_trace(y=~Frequency, 
+              name='American english',
+              color=I('lightsteelblue3'), type='scatter', 
+              mode='lines+markers') %>%
+    add_lines(y=phrase2.us.smoothed, 
+              name='American english (smoothed)', 
+              color=I('steelblue4')) %>%
+    add_trace(y=phrase2.gb$Frequency, 
+              name='British english',
+              color=I('violet'), type='scatter',
+              mode='lines+markers') %>%
+    add_lines(y=phrase2.gb.smoothed,
+              name='British english (smoothed)',
+              color=I('violetred')) %>%
+    add_trace(y=phrase2.fic$Frequency, 
+              name='fiction books', 
+              color=I('orange'), type='scatter',
+              mode='lines+markers') %>%
+    add_lines(y=phrase2.fic.smoothed,
+              name='fiction books (smoothed)',
+              color=I('orangered')) %>%
+    layout(title="Usage of 'come rain or shine', categorized by corpus",
+           yaxis=list(showexponent='all',
+                      exponentformat='e'))
+```
